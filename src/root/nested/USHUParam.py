@@ -52,7 +52,8 @@ def HUCatPayout():
     
     e0.focus_set()
     
-    def getPayouts(): # OK button, gets user payout structure
+    # OK button, gets user payout structure
+    def getPayouts(): 
         payouts = np.zeros((6,1), dtype=float)
         payouts[0] = float(e0.get())
         payouts[1] = float(e1.get())
@@ -65,17 +66,18 @@ def HUCatPayout():
         globpayouts = payouts
         return payouts
     
-    def cancel(): # Exit button
+    # Exit button
+    def cancel():
         master.destroy()
         sys.exit()
         
-    button = tkinter.Button(master, text='OK', command=getPayouts, padx=10).grid(row=7, column=0)
+    button = tkinter.Button(master, text='OK', command=getPayouts, padx=10)
+    button.grid(row=7, column=0)
     tkinter.Button(master, text='Cancel', command = cancel).grid(row=7, column=1)
     
     tkinter.mainloop()
-    payouts = button.invoke()
+    button.invoke()
     master.withdraw()
-    return payouts
 
 def reloadHist(hist_file,reload=True):
     '''
