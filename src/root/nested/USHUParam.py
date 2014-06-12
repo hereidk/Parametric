@@ -55,12 +55,23 @@ def HUCatPayout():
     # OK button, gets user payout structure
     def getPayouts(): 
         payouts = np.zeros((6,1), dtype=float)
-        payouts[0] = float(e0.get())
-        payouts[1] = float(e1.get())
-        payouts[2] = float(e2.get())
-        payouts[3] = float(e3.get())
-        payouts[4] = float(e4.get())
-        payouts[5] = float(e5.get())
+        try:
+            payouts[0] = float(e0.get())
+            payouts[1] = float(e1.get())
+            payouts[2] = float(e2.get())
+            payouts[3] = float(e3.get())
+            payouts[4] = float(e4.get())
+            payouts[5] = float(e5.get())
+        except ValueError:
+#             master.destroy()
+#             
+#             tkinter.Label(master, text='Invalid payout-please enter numeric value.').grid(row=1)
+#             button = tkinter.Button(master, text='OK', command=cancel)
+#             button.grid(row=1)
+#             
+#             tkinter.mainloop()
+            print('ERROR: Invalid payout-please enter numeric value.')
+            sys.exit()
         master.quit()
         global globpayouts
         globpayouts = payouts
@@ -88,7 +99,6 @@ def reloadHist(hist_file,reload=True):
     else:
         return r'C:\PF2\QGIS Valmiera\Datasets\Parametric\stormpts_layer.shp'
     
-
 def resultsBox(aal,losscost):
     '''
     Text box with results
@@ -106,6 +116,54 @@ def resultsBox(aal,losscost):
     
     tkinter.mainloop()
 
+def radioYear():
+    master = tkinter.Tk()
+    
+    v = tkinter.IntVar()
+    v.set(None)
+    
+    def setYear(v, value):
+        v.set(value)
+
+    def ok(v, otherentry):
+        try:
+            if v.get() == 0:
+                v.set(int(otherentry.get()))
+        except ValueError:
+            print('ERROR: Invalid year-please enter numeric value between 1848 and 2013.')
+            sys.exit()
+        master.quit()
+    
+    def cancel():
+        master.destroy()
+        sys.exit()
+    
+    total = tkinter.Radiobutton(master, text='1848: Total record', variable=v, value=1848, command=lambda: setYear(v, 1848))
+    total.grid(row=0)
+#     total.deselect()
+    
+    historical = tkinter.Radiobutton(master, text='1950: Recent historical record', variable=v, value=1950, command=lambda: setYear(v, 1950))
+    historical.grid(row=1)
+#     historical.deselect()
+    
+    satellite = tkinter.Radiobutton(master, text='1970: Satellite era', variable=v, value=1970, command=lambda: setYear(v, 1970))
+    satellite.grid(row=2)
+#     satellite.deselect()
+    
+    otherradio = tkinter.Radiobutton(master, text='Other', variable=v, value=0, command=lambda: setYear(v, 0))
+    otherradio.grid(row=3)
+#     otherradio.deselect()
+    
+    otherentry = tkinter.Entry(master, textvariable=v)
+    otherentry.grid(row=4)
+    
+    tkinter.Button(master, text='OK', command = lambda: ok(v,otherentry)).grid(row=5)
+    tkinter.Button(master, text='Cancel', command = cancel).grid(row=6)
+    
+    tkinter.mainloop()
+    master.withdraw()
+    
+    return v.get()
 
 if __name__ == '__main__':
     # CSV file with lat/lon points defining box outline
@@ -113,7 +171,6 @@ if __name__ == '__main__':
     
     # Historical dataset, IBTrACS
     hist_file = r'Y:\XP transfer\US\US GoM\Allstorms.ibtracs_wmo.v03r05.csv'
-    
     
     param = Parametric()
     
@@ -139,15 +196,26 @@ if __name__ == '__main__':
         intersect_max.Payout[i] = globpayouts[intersect_max.Category[i],0]
     
     # Determine length of historical record
-    startYear = 1848
+    startYear = radioYear()
     currentYear = 2013
+    
+    if startYear < 1848:
+        startYear = 1848
+    if startYear > 2013:
+        startYear = 2013
+        
     yearRange = currentYear - startYear + 1
+    
+    # Clip event set to user-defined year range
+    intersect_max = intersect_max[intersect_max.Year >= startYear]
     
     # Calculate AAL, loss cost
     totalPayout = sum(intersect_max.Payout.values)
     maxpayout = np.max(globpayouts)
     aal = totalPayout/yearRange
     losscost = aal/maxpayout
+    if np.isnan(losscost):
+        losscost=0
     
     # Text box with results
     resultsBox(aal,losscost)
