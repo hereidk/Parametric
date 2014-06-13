@@ -90,14 +90,20 @@ def HUCatPayout():
     button.invoke()
     master.withdraw()
 
-def reloadHist(hist_file,reload=True):
+def reloadHistHU(hist_file, reloadHU=True):
     '''
     if reload is true, recalculate shapefile, otherwise point to existing shapefile
     '''
-    if reload:
+    if reloadHU:
         return param.loadIBTRACSData(hist_file)
-    else:
+    elif reloadHU == False:
         return r'C:\PF2\QGIS Valmiera\Datasets\Parametric\stormpts_layer.shp'
+    
+def reloadHistEQ(reloadEQ=True):
+    if reloadEQ:
+        return param.loadUSGSEQData()
+    elif reloadEQ == False:
+        return r'C:\PF2\QGIS Valmiera\Datasets\Parametric\eqpts_layer.shp'
     
 def resultsBox(aal,losscost):
     '''
@@ -117,11 +123,11 @@ def resultsBox(aal,losscost):
     tkinter.mainloop()
 
 def radioYear():
-    master = tkinter.Tk()
     
+    master = tkinter.Tk()    
     v = tkinter.IntVar()
     v.set(None)
-    
+       
     def setYear(v, value):
         v.set(value)
 
@@ -140,19 +146,19 @@ def radioYear():
     
     total = tkinter.Radiobutton(master, text='1848: Total record', variable=v, value=1848, command=lambda: setYear(v, 1848))
     total.grid(row=0)
-#     total.deselect()
+    total.deselect()
     
     historical = tkinter.Radiobutton(master, text='1950: Recent historical record', variable=v, value=1950, command=lambda: setYear(v, 1950))
     historical.grid(row=1)
-#     historical.deselect()
+    historical.deselect()
     
     satellite = tkinter.Radiobutton(master, text='1970: Satellite era', variable=v, value=1970, command=lambda: setYear(v, 1970))
     satellite.grid(row=2)
-#     satellite.deselect()
+    satellite.deselect()
     
     otherradio = tkinter.Radiobutton(master, text='Other', variable=v, value=0, command=lambda: setYear(v, 0))
     otherradio.grid(row=3)
-#     otherradio.deselect()
+    otherradio.deselect()
     
     otherentry = tkinter.Entry(master, textvariable=v)
     otherentry.grid(row=4)
@@ -167,56 +173,62 @@ def radioYear():
 
 if __name__ == '__main__':
     # CSV file with lat/lon points defining box outline
-    box_file = r'C:\Python code\Parametric\src\root\nested\Box_template.csv'
+#     box_file = r'C:\Python code\Parametric\src\root\nested\Box_template.csv'
+    box_file = r'C:\Python code\Parametric\src\root\nested\EQBox_template.csv'
     
     # Historical dataset, IBTrACS
-    hist_file = r'Y:\XP transfer\US\US GoM\Allstorms.ibtracs_wmo.v03r05.csv'
+    huhist_file = r'Y:\XP transfer\US\US GoM\Allstorms.ibtracs_wmo.v03r05.csv'
+    eqhist_file = r'C:\Python code\Parametric\src\root\nested\USGSoutput.csv'
     
     param = Parametric()
+    
+    
     
     # Convert box points to polygon shapefile
     box = param.genParamBox(box_file)
     
     # Produce shapefile of storm tracks
-    ibtracsData = reloadHist(hist_file, reload=False) # reload=False: Use current shapefile
+    ibtracsData = reloadHistHU(huhist_file, reloadHU=False) # reload=False: Use current shapefile
+    USGSEQData = reloadHistEQ(reloadEQ=False)
     
     # Get subset of points that fall within box
-    intersect = param.intersect(box,ibtracsData)
+#     intersect = param.intersect(box,ibtracsData)
+    intersect = param.intersectEQ(box,USGSEQData)
     
-    # Select highest category that each storm reached within box
-    intersect_max = intersect.groupby('Serial', group_keys=False).apply(lambda x: x.ix[x.Category.idxmax()])
-    intersect_max.index = range(len(intersect_max))
-        
-    # Get user-defined payout structure. Any units or %
-    HUCatPayout()
-    
-    # Set payout level based on storm category, user inputs
-    intersect_max['Payout'] = ''
-    for i in intersect_max.index:
-        intersect_max.Payout[i] = globpayouts[intersect_max.Category[i],0]
-    
-    # Determine length of historical record
-    startYear = radioYear()
-    currentYear = 2013
-    
-    if startYear < 1848:
-        startYear = 1848
-    if startYear > 2013:
-        startYear = 2013
-        
-    yearRange = currentYear - startYear + 1
-    
-    # Clip event set to user-defined year range
-    intersect_max = intersect_max[intersect_max.Year >= startYear]
-    
-    # Calculate AAL, loss cost
-    totalPayout = sum(intersect_max.Payout.values)
-    maxpayout = np.max(globpayouts)
-    aal = totalPayout/yearRange
-    losscost = aal/maxpayout
-    if np.isnan(losscost):
-        losscost=0
-    
-    # Text box with results
-    resultsBox(aal,losscost)
-    
+#     # Select highest category that each storm reached within box
+#     intersect_max = intersect.groupby('Serial', group_keys=False).apply(lambda x: x.ix[x.Category.idxmax()])
+#     intersect_max.index = range(len(intersect_max))
+#         
+#     # Get user-defined payout structure. Any units or %
+#     HUCatPayout()
+#     
+#     # Set payout level based on storm category, user inputs
+#     intersect_max['Payout'] = ''
+#     for i in intersect_max.index:
+#         intersect_max.Payout[i] = globpayouts[intersect_max.Category[i],0]
+#     
+#     # Determine length of historical record
+#     startYear = radioYear()
+#     currentYear = 2013
+#     
+#     if startYear < 1848:
+#         startYear = 1848
+#     if startYear > 2013:
+#         startYear = 2013
+#         
+#     yearRange = currentYear - startYear + 1
+#     
+#     # Clip event set to user-defined year range
+#     intersect_max = intersect_max[intersect_max.Year >= startYear]
+#     
+#     # Calculate AAL, loss cost
+#     totalPayout = sum(intersect_max.Payout.values)
+#     maxpayout = np.max(globpayouts)
+#     aal = totalPayout/yearRange
+#     losscost = aal/maxpayout
+#     if np.isnan(losscost):
+#         losscost=0
+#     
+#     # Text box with results
+#     resultsBox(aal,losscost)
+#     
