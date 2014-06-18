@@ -150,7 +150,7 @@ class Parametric(object):
             count = json['metadata']['count']
 #             f.write('\n' + str(count) + ' events recorded\n')
              
-            EQinfo = pandas.DataFrame(columns=('year','mag','lon','lat','depth'), index=range(count))
+            EQinfo = pandas.DataFrame(columns=('year','mag','lon','lat','depth'), index=range(count), dtype=float)
             for i in range(count):
                 epoch_millisecs = json['features'][i]['properties']['time']
                 try:
@@ -214,7 +214,7 @@ class Parametric(object):
 #         serialField = osgeo.ogr.FieldDefn('Serial', osgeo.ogr.OFTString)
 #         ptsLayer.CreateField(serialField)
         
-        catField = osgeo.ogr.FieldDefn('Magnitude', osgeo.ogr.OFTInteger)
+        catField = osgeo.ogr.FieldDefn('Mag', osgeo.ogr.OFTReal)
         ptsLayer.CreateField(catField)
         
         catField = osgeo.ogr.FieldDefn('Year', osgeo.ogr.OFTInteger)
@@ -230,7 +230,7 @@ class Parametric(object):
             feature.SetGeometry(pts)
             feature.SetFID(featureIndex)
 #             feature.SetField('Serial', serial.iloc[i])
-            feature.SetField('Magnitude', magnitude.iloc[i])
+            feature.SetField('Mag', magnitude.iloc[i])
             feature.SetField('Year', year.iloc[i])
             
             ptsLayer.CreateFeature(feature)
@@ -332,7 +332,7 @@ class Parametric(object):
 #         serialField = osgeo.ogr.FieldDefn('Serial', osgeo.ogr.OFTString)
 #         intersectshp.CreateField(serialField)
         
-        catField = osgeo.ogr.FieldDefn('Magnitude', osgeo.ogr.OFTInteger)
+        catField = osgeo.ogr.FieldDefn('Mag', osgeo.ogr.OFTReal)
         intersectshp.CreateField(catField)
         
         catField = osgeo.ogr.FieldDefn('Year', osgeo.ogr.OFTInteger)
@@ -353,7 +353,7 @@ class Parametric(object):
         
         pts = osgeo.ogr.Geometry(osgeo.ogr.wkbPoint)
         count = 0
-        eq_array = pandas.DataFrame(columns=['Magnitude','Year'], index = range(datalyr.GetFeatureCount()))
+        eq_array = pandas.DataFrame(columns=['Mag','Year'], index = range(datalyr.GetFeatureCount()))
         for feat in datalyr:
             datapt = feat.GetGeometryRef()
             pts.AddPoint(datapt.GetX(), datapt.GetY())
@@ -364,8 +364,8 @@ class Parametric(object):
             feature.SetFID(featureIndex)
 #             feature.SetField('Serial', feat.GetField('Serial'))
 #             storm_array.Serial[count] = feat.GetField('Serial')
-            feature.SetField('Magnitude', feat.GetField('Magnitude'))
-            eq_array.Magnitude[count] = feat.GetField('Magnitude')
+            feature.SetField('Mag', feat.GetField('Mag'))
+            eq_array.Mag[count] = feat.GetField('Mag')
             feature.SetField('Year', feat.GetField('Year'))
             eq_array.Year[count] = feat.GetField('Year')
 #             storm_array.append([feat.GetField('Serial'), feat.GetField('Category')])
