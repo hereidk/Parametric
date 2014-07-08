@@ -29,6 +29,24 @@ class Parametric(object):
         '''
         self.filepath = 'C:\PF2\QGIS Valmiera\Datasets\Parametric\\'
         
+    def initializeSHP(self, layername):
+        # Set projection
+        spatialReference = osgeo.osr.SpatialReference()
+        spatialReference.ImportFromProj4('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
+        
+        # If the file was previously created, remove the old version
+        if os.path.exists(self.filepath+layername+'%s' % '.shp'):
+            os.remove(self.filepath+layername+'%s' % '.shp')
+            os.remove(self.filepath+layername+'%s' % '.dbf')
+            os.remove(self.filepath+layername+'%s' % '.prj')
+            os.remove(self.filepath+layername+'%s' % '.shx')
+            
+        driver = osgeo.ogr.GetDriverByName('ESRI Shapefile')
+        shapeData = driver.CreateDataSource(self.filepath[:-1])
+        
+        return spatialReference, shapeData
+        
+    
     def genParamBox(self, box_file):
         
         # Upload .csv with lat/lon coordinates of box corners
@@ -45,21 +63,9 @@ class Parametric(object):
         
         # Build coordinates into shapefile
         
-        # Set projection
-        spatialReference = osgeo.osr.SpatialReference()
-        spatialReference.ImportFromProj4('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
-        
         layername = 'box_layer'
         
-        # If the file was previously created, remove the old version
-        if os.path.exists(self.filepath+layername+'%s' % '.shp'):
-            os.remove(self.filepath+layername+'%s' % '.shp')
-            os.remove(self.filepath+layername+'%s' % '.dbf')
-            os.remove(self.filepath+layername+'%s' % '.prj')
-            os.remove(self.filepath+layername+'%s' % '.shx')
-        
-        driver = osgeo.ogr.GetDriverByName('ESRI Shapefile')
-        shapeData = driver.CreateDataSource(self.filepath[:-1])
+        spatialReference, shapeData = self.initializeSHP(layername)
                
         # Define layer for box
         boxLayer = shapeData.CreateLayer(layername,spatialReference,osgeo.ogr.wkbPolygon)
