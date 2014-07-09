@@ -9,6 +9,34 @@ from root.nested.ParamBox import Parametric
 import numpy as np
 import sys
 
+def selectHazard():
+    # Drop-down menu to select hazard
+    root = tkinter.Tk()
+    root.geometry("%dx%d+%d+%d" % (330, 80, 200, 150))
+    root.title('Select hazard type')
+    
+    choices = ['Hurricane','Earthquake']
+        
+    var = tkinter.StringVar(root)
+    var.set(choices[0]) # Initial value
+    option = tkinter.OptionMenu(root, var, *choices)
+    option.pack(side='left', padx=10, pady=10)
+    scrollbar = tkinter.Scrollbar(root)
+    scrollbar.pack(side='right', fill='y')
+    
+    def get_hazard():
+        select_hazard = var.get()
+        root.quit()
+        return select_hazard
+    
+    button = tkinter.Button(root, text='OK', command=get_hazard)
+    button.pack(side='left', padx=20, pady=10)
+        
+    root.mainloop()
+    hazard = button.invoke()
+    root.withdraw()
+    return hazard
+
 def HUCatPayout():
     '''
     Get user-defined payout structure. Takes any units.
@@ -275,7 +303,9 @@ def runHU():
     ibtracsData = reloadHistHU(param, huhist_file, reloadHU=False) # reload=False: Use current shapefile
     
     # Get subset of points that fall within box
-    intersect = param.intersect(box,ibtracsData)
+#     intersect = param.intersect(box,ibtracsData)
+    fields = {'Serial':'OFTString', 'Category':'OFTInteger', 'Year':'OFTInteger'} # Field names, data type
+    intersect = param.intersect(box, ibtracsData, fields)
     
     # Select highest category that each storm reached within box
     intersect_max = intersect.groupby('Serial', group_keys=False).apply(lambda x: x.ix[x.Category.idxmax()])
@@ -311,7 +341,8 @@ def runEQ():
     
     USGSEQData = reloadHistEQ(param, reloadEQ=False)
     
-    intersect = param.intersectEQ(box,USGSEQData)
+    fields = {'Mag':'OFTReal', 'Year':'OFTInteger'} # Field names, data type
+    intersect = param.intersect(box,USGSEQData,fields)
     
     EQCatPayout()
     
@@ -349,11 +380,12 @@ def runEQ():
     
 
 if __name__ == '__main__':
-    # CSV file with lat/lon points defining box outline
     
-
-#     intersect_max, startYear, currentYear = runHU() 
-    intersect_max, startYear, currentYear = runEQ()
+    hazard = selectHazard()
+    if hazard == 'Hurricane':   
+        intersect_max, startYear, currentYear = runHU()
+    elif hazard == 'Earthquake': 
+        intersect_max, startYear, currentYear = runEQ()
         
     yearRange = currentYear - startYear + 1
      

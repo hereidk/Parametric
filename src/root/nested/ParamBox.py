@@ -248,28 +248,23 @@ class Parametric(object):
         
         # Return name of new shapefile
         return self.filepath+layername+'.shp'
-        
-        
-#         return sys.path[0]+'\\'+output_file
     
-    def intersect(self, box, data):
+        
+    def intersect(self, box, data, fields): # Fields in dict with data type
         
         layername = 'intersect_layer'
         
         spatialReference, shapeData = self.initializeSHP(layername)
         
         # Define layer for intersect
-        intersectshp = shapeData.CreateLayer('intersect', spatialReference, geom_type=osgeo.ogr.wkbPoint)
-                
+        intersectshp = shapeData.CreateLayer(layername, spatialReference, geom_type=osgeo.ogr.wkbPoint)
+        
         # Add data fields
-        serialField = osgeo.ogr.FieldDefn('Serial', osgeo.ogr.OFTString)
-        intersectshp.CreateField(serialField)
-        
-        catField = osgeo.ogr.FieldDefn('Category', osgeo.ogr.OFTInteger)
-        intersectshp.CreateField(catField)
-        
-        catField = osgeo.ogr.FieldDefn('Year', osgeo.ogr.OFTInteger)
-        intersectshp.CreateField(catField)
+        for field in fields:
+            field_name = field
+            function = getattr(osgeo.ogr,fields[field])
+            catField = osgeo.ogr.FieldDefn(field_name, function)
+            intersectshp.CreateField(catField)
         
         layerDefinition = intersectshp.GetLayerDefn()
         
@@ -288,9 +283,10 @@ class Parametric(object):
         datalyr.SetSpatialFilter(boxgeom)
         
         # Create point feature, add points from data layer
-        pts = osgeo.ogr.Geometry(osgeo.ogr.wkbPoint)
         count = 0
-        storm_array = pandas.DataFrame(columns=['Serial','Category','Year'], index = range(datalyr.GetFeatureCount()))
+        field_list = list(fields.keys())
+        pts = osgeo.ogr.Geometry(osgeo.ogr.wkbPoint)        
+        hazard_array = pandas.DataFrame(columns=field_list, index = range(datalyr.GetFeatureCount()))
         for feat in datalyr:
             datapt = feat.GetGeometryRef()
             pts.AddPoint(datapt.GetX(), datapt.GetY())
@@ -300,90 +296,15 @@ class Parametric(object):
             feature.SetGeometry(pts)
             feature.SetFID(featureIndex)
             
-            # Add storm characteristics to each point
-            feature.SetField('Serial', feat.GetField('Serial'))
-            storm_array.Serial[count] = feat.GetField('Serial')
-            feature.SetField('Category', feat.GetField('Category'))
-            storm_array.Category[count] = feat.GetField('Category')
-            feature.SetField('Year', feat.GetField('Year'))
-            storm_array.Year[count] = feat.GetField('Year')
-#             storm_array.append([feat.GetField('Serial'), feat.GetField('Category')])
+            # Add hazard characteristics to each point
+            for i in field_list:
+                feature.SetField(i, feat.GetField(i))
+                hazard_array[i][count] = feat.GetField(i)
             
             intersectshp.CreateFeature(feature)
             count+=1
 
-#         intersectshp.GetField('Serial')
-        
         shapeData.Destroy()
         
         # Return array of storms falling within box
-        return storm_array
-    
-    
-    def intersectEQ(self, box, data):
-        
-        layername = 'intersect_layer'
-        
-        spatialReference, shapeData = self.initializeSHP(layername)
-        
-        # Define layer for intersect
-        intersectshp = shapeData.CreateLayer('intersect', spatialReference, geom_type=osgeo.ogr.wkbPoint)
-        
-        
-        # Add data fields
-#         serialField = osgeo.ogr.FieldDefn('Serial', osgeo.ogr.OFTString)
-#         intersectshp.CreateField(serialField)
-        
-        catField = osgeo.ogr.FieldDefn('Mag', osgeo.ogr.OFTReal)
-        intersectshp.CreateField(catField)
-        
-        catField = osgeo.ogr.FieldDefn('Year', osgeo.ogr.OFTInteger)
-        intersectshp.CreateField(catField)
-        
-        layerDefinition = intersectshp.GetLayerDefn()
-        
-        DriverName = "ESRI Shapefile"
-        driver = osgeo.ogr.GetDriverByName(DriverName)
-        
-        # Get box from shapefile
-        boxshp = driver.Open(box)
-        boxlyr = boxshp.GetLayer()
-        boxfeat = boxlyr.GetFeature(0)
-        boxgeom = boxfeat.GetGeometryRef()
-        
-        # Get dataset from shapefile
-        datashp = driver.Open(data)
-        datalyr = datashp.GetLayer()          
-        datalyr.SetSpatialFilter(boxgeom)
-        
-        # Create point feature, add points from data layer
-        pts = osgeo.ogr.Geometry(osgeo.ogr.wkbPoint)
-        count = 0
-        eq_array = pandas.DataFrame(columns=['Mag','Year'], index = range(datalyr.GetFeatureCount()))
-        for feat in datalyr:
-            datapt = feat.GetGeometryRef()
-            pts.AddPoint(datapt.GetX(), datapt.GetY())
-            
-            featureIndex = count
-            feature = osgeo.ogr.Feature(layerDefinition)
-            feature.SetGeometry(pts)
-            feature.SetFID(featureIndex)
-            
-            # Add earthquake characteristics to each point
-#             feature.SetField('Serial', feat.GetField('Serial'))
-#             storm_array.Serial[count] = feat.GetField('Serial')
-            feature.SetField('Mag', feat.GetField('Mag'))
-            eq_array.Mag[count] = feat.GetField('Mag')
-            feature.SetField('Year', feat.GetField('Year'))
-            eq_array.Year[count] = feat.GetField('Year')
-#             storm_array.append([feat.GetField('Serial'), feat.GetField('Category')])
-            
-            intersectshp.CreateFeature(feature)
-            count+=1
-
-#         intersectshp.GetField('Serial')
-        
-        shapeData.Destroy()
-        
-        # Return array of storms falling within box
-        return eq_array
+        return hazard_array
