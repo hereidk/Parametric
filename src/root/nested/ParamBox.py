@@ -109,21 +109,9 @@ class Parametric(object):
         serial = hudata.Serial_Num # Individual storm identifier
         category = hudata.Category.astype('float')
         
-        # Set projection
-        spatialReference = osgeo.osr.SpatialReference()
-        spatialReference.ImportFromProj4('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
-        
         layername = 'stormpts_layer'
         
-        # If the file was previously created, remove the old version
-        if os.path.exists(self.filepath+layername+'%s' % '.shp'):
-            os.remove(self.filepath+layername+'%s' % '.shp')
-            os.remove(self.filepath+layername+'%s' % '.dbf')
-            os.remove(self.filepath+layername+'%s' % '.prj')
-            os.remove(self.filepath+layername+'%s' % '.shx')
-        
-        driver = osgeo.ogr.GetDriverByName('ESRI Shapefile')
-        shapeData = driver.CreateDataSource(self.filepath+layername+'.shp')
+        spatialReference, shapeData = self.initializeSHP(layername)
                
         # Define layer for storm points
         ptsLayer = shapeData.CreateLayer(layername,spatialReference,osgeo.ogr.wkbPoint)
@@ -221,22 +209,10 @@ class Parametric(object):
 #         serial = eqdata.Serial_Num
         magnitude = eqdata.mag.astype('float')
         
-        # Set projection
-        spatialReference = osgeo.osr.SpatialReference()
-        spatialReference.ImportFromProj4('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
-        
         layername = 'eqpts_layer'
         
-        # If the file was previously created, remove the old version
-        if os.path.exists(self.filepath+layername+'%s' % '.shp'):
-            os.remove(self.filepath+layername+'%s' % '.shp')
-            os.remove(self.filepath+layername+'%s' % '.dbf')
-            os.remove(self.filepath+layername+'%s' % '.prj')
-            os.remove(self.filepath+layername+'%s' % '.shx')
+        spatialReference, shapeData = self.initializeSHP(layername)
         
-        driver = osgeo.ogr.GetDriverByName('ESRI Shapefile')
-        shapeData = driver.CreateDataSource(self.filepath+layername+'.shp')
-               
         # Define layer for earthquake points
         ptsLayer = shapeData.CreateLayer(layername,spatialReference,osgeo.ogr.wkbPoint)
         layerDefinition = ptsLayer.GetLayerDefn()
@@ -277,21 +253,10 @@ class Parametric(object):
 #         return sys.path[0]+'\\'+output_file
     
     def intersect(self, box, data):
-        # Set projection
-        spatialReference = osgeo.osr.SpatialReference()
-        spatialReference.ImportFromProj4('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
         
         layername = 'intersect_layer'
         
-        # If the file was previously created, remove the old version
-        if os.path.exists(self.filepath+layername+'%s' % '.shp'):
-            os.remove(self.filepath+layername+'%s' % '.shp')
-            os.remove(self.filepath+layername+'%s' % '.dbf')
-            os.remove(self.filepath+layername+'%s' % '.prj')
-            os.remove(self.filepath+layername+'%s' % '.shx')
-        
-        driver = osgeo.ogr.GetDriverByName('ESRI Shapefile')
-        shapeData = driver.CreateDataSource(self.filepath+layername+'.shp')
+        spatialReference, shapeData = self.initializeSHP(layername)
         
         # Define layer for intersect
         intersectshp = shapeData.CreateLayer('intersect', spatialReference, geom_type=osgeo.ogr.wkbPoint)
@@ -356,21 +321,10 @@ class Parametric(object):
     
     
     def intersectEQ(self, box, data):
-        # Set projection
-        spatialReference = osgeo.osr.SpatialReference()
-        spatialReference.ImportFromProj4('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
         
         layername = 'intersect_layer'
         
-        # If the file was previously created, remove the old version
-        if os.path.exists(self.filepath+layername+'%s' % '.shp'):
-            os.remove(self.filepath+layername+'%s' % '.shp')
-            os.remove(self.filepath+layername+'%s' % '.dbf')
-            os.remove(self.filepath+layername+'%s' % '.prj')
-            os.remove(self.filepath+layername+'%s' % '.shx')
-        
-        driver = osgeo.ogr.GetDriverByName('ESRI Shapefile')
-        shapeData = driver.CreateDataSource(self.filepath+layername+'.shp')
+        spatialReference, shapeData = self.initializeSHP(layername)
         
         # Define layer for intersect
         intersectshp = shapeData.CreateLayer('intersect', spatialReference, geom_type=osgeo.ogr.wkbPoint)
