@@ -91,13 +91,6 @@ def HUCatPayout():
             payouts[4] = float(e4.get())
             payouts[5] = float(e5.get())
         except ValueError:
-#             master.destroy()
-#             
-#             tkinter.Label(master, text='Invalid payout-please enter numeric value.').grid(row=1)
-#             button = tkinter.Button(master, text='OK', command=cancel)
-#             button.grid(row=1)
-#             
-#             tkinter.mainloop()
             print('ERROR: Invalid payout-please enter numeric value.')
             sys.exit()
         master.quit()
@@ -211,7 +204,7 @@ def EQCatPayout():
 
 def reloadHistHU(param, hist_file, reloadHU=True):
     '''
-    if reload is true, recalculate shapefile, otherwise point to existing shapefile
+    If reload is true, recalculate shapefile, otherwise point to existing shapefile
     '''
     if reloadHU:
         return param.loadIBTRACSData(hist_file)
@@ -219,6 +212,9 @@ def reloadHistHU(param, hist_file, reloadHU=True):
         return r'C:\PF2\QGIS Valmiera\Datasets\Parametric\stormpts_layer.shp'
     
 def reloadHistEQ(param, reloadEQ=True):
+    '''
+    If reload is true, recalculate shapefile, otherwise point to existing shapefile
+    '''
     if reloadEQ:
         return param.loadUSGSEQData()
     elif reloadEQ == False:
@@ -242,7 +238,9 @@ def resultsBox(aal,losscost):
     tkinter.mainloop()
 
 def radioYearHU():
-    
+    '''
+    Set preferred start of time series-older near major population centers, up to satellite era
+    '''
     master = tkinter.Tk()    
     v = tkinter.IntVar()
     v.set(None)
@@ -331,6 +329,9 @@ def runHU():
     return intersect_max, startYear, currentYear
      
 def runEQ():
+    '''
+    Based on magnitude only - add depth parameter??
+    '''
     box_file = r'C:\Python code\Parametric\src\root\nested\EQBox_template.csv'    
 #     eqhist_file = r'C:\Python code\Parametric\src\root\nested\USGSoutput.csv'
     
@@ -381,6 +382,7 @@ def runEQ():
 
 if __name__ == '__main__':
     
+    # Get user input to select hazard to analyze
     hazard = selectHazard()
     if hazard == 'Hurricane':   
         intersect_max, startYear, currentYear = runHU()
