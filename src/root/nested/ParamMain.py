@@ -8,6 +8,7 @@ import tkinter
 from root.nested.ParamBox import Parametric
 import numpy as np
 import sys
+import os
 
 def selectHazard():
     # Drop-down menu to select hazard
@@ -209,7 +210,7 @@ def reloadHistHU(param, hist_file, reloadHU=True):
     if reloadHU:
         return param.loadIBTRACSData(hist_file)
     elif reloadHU == False:
-        return r'C:\PF2\QGIS Valmiera\Datasets\Parametric\stormpts_layer.shp'
+        return os.getcwd() + '\GeoData\stormpts_layer.shp'
     
 def reloadHistEQ(param, reloadEQ=True):
     '''
@@ -218,7 +219,7 @@ def reloadHistEQ(param, reloadEQ=True):
     if reloadEQ:
         return param.loadUSGSEQData()
     elif reloadEQ == False:
-        return r'C:\PF2\QGIS Valmiera\Datasets\Parametric\eqpts_layer.shp'
+        return os.getcwd() + '\GeoData\eqpts_layer.shp'
     
 def resultsBox(aal,losscost):
     '''
@@ -289,7 +290,7 @@ def radioYearHU():
     return v.get()
 
 def runHU():
-    box_file = r'C:\Python code\Parametric\src\root\nested\Box_template.csv'
+    box_file = 'Box_template.csv'
     huhist_file = r'Y:\XP transfer\US\US GoM\Allstorms.ibtracs_wmo.v03r05.csv'
     
     param = Parametric()
@@ -332,7 +333,7 @@ def runEQ():
     '''
     Based on magnitude only - add depth parameter??
     '''
-    box_file = r'C:\Python code\Parametric\src\root\nested\EQBox_template.csv'    
+    box_file = 'EQBox_template.csv'    
 #     eqhist_file = r'C:\Python code\Parametric\src\root\nested\USGSoutput.csv'
     
     param = Parametric()

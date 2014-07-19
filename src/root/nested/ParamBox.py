@@ -27,7 +27,7 @@ class Parametric(object):
         '''
         Constructor
         '''
-        self.filepath = 'C:\PF2\QGIS Valmiera\Datasets\Parametric\\'
+        self.filepath = os.getcwd() + '\GeoData\\'
         
     def initializeSHP(self, layername):
         # Set projection
@@ -69,7 +69,10 @@ class Parametric(object):
                
         # Define layer for box
         boxLayer = shapeData.CreateLayer(layername,spatialReference,osgeo.ogr.wkbPolygon)
-        layerDefinition = boxLayer.GetLayerDefn()
+        try:
+            layerDefinition = boxLayer.GetLayerDefn()
+        except:
+            print ('UGH.')
         
         # Create linear ring feature, add points from data file
         ring = osgeo.ogr.Geometry(osgeo.ogr.wkbLinearRing)        
