@@ -291,7 +291,7 @@ def radioYearHU():
 
 def runHU():
     box_file = 'Box_template.csv'
-    huhist_file = r'Y:\XP transfer\US\US GoM\Allstorms.ibtracs_wmo.v03r05.csv'
+    huhist_file = 'Allstorms.ibtracs_wmo.v03r05.csv'
     
     param = Parametric()
     
