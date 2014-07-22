@@ -10,13 +10,11 @@ import numpy as np
 import sys
 import os
 
-def selectHazard():
+def selectHazard(title, choices):
     # Drop-down menu to select hazard
     root = tkinter.Tk()
     root.geometry("%dx%d+%d+%d" % (330, 80, 200, 150))
-    root.title('Select hazard type')
-    
-    choices = ['Hurricane','Earthquake']
+    root.title(title)
         
     var = tkinter.StringVar(root)
     var.set(choices[0]) # Initial value
@@ -289,7 +287,7 @@ def radioYearHU():
     
     return v.get()
 
-def runHU():
+def runHU(reloadHU):
     box_file = 'Box_template.csv'
     huhist_file = 'Allstorms.ibtracs_wmo.v03r05.csv'
     
@@ -299,7 +297,7 @@ def runHU():
     box = param.genParamBox(box_file)
     
     # Produce shapefile of storm tracks
-    ibtracsData = reloadHistHU(param, huhist_file, reloadHU=False) # reload=False: Use current shapefile
+    ibtracsData = reloadHistHU(param, huhist_file, reloadHU) # reload=False: Use current shapefile
     
     # Get subset of points that fall within box
 #     intersect = param.intersect(box,ibtracsData)
@@ -329,7 +327,7 @@ def runHU():
          
     return intersect_max, startYear, currentYear
      
-def runEQ():
+def runEQ(reloadEQ):
     '''
     Based on magnitude only - add depth parameter??
     '''
@@ -341,7 +339,7 @@ def runEQ():
     # Convert box points to polygon shapefile
     box = param.genParamBox(box_file)
     
-    USGSEQData = reloadHistEQ(param, reloadEQ=False)
+    USGSEQData = reloadHistEQ(param, reloadEQ)
     
     fields = {'Mag':'OFTReal', 'Year':'OFTInteger'} # Field names, data type
     intersect = param.intersect(box,USGSEQData,fields)
@@ -384,11 +382,22 @@ def runEQ():
 if __name__ == '__main__':
     
     # Get user input to select hazard to analyze
-    hazard = selectHazard()
+    choices = ['Hurricane','Earthquake']
+    hazard = selectHazard('Select hazard type', choices)
+    
+    # Get user input on reloading database
+    choices = ['Yes','No']
+    update = selectHazard('Update historical database?', choices)
+    
+    if update == 'Yes':
+        reload = True
+    elif update == 'No':
+        reload = False
+    
     if hazard == 'Hurricane':   
-        intersect_max, startYear, currentYear = runHU()
+        intersect_max, startYear, currentYear = runHU(reload)
     elif hazard == 'Earthquake': 
-        intersect_max, startYear, currentYear = runEQ()
+        intersect_max, startYear, currentYear = runEQ(reload)
         
     yearRange = currentYear - startYear + 1
      
