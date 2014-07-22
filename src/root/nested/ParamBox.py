@@ -186,12 +186,12 @@ class Parametric(object):
             html = 'http://comcat.cr.usgs.gov/fdsnws/event/1/query?starttime=1900-01-01&endtime=%s&minmagnitude=6.0&format=geojson' % strftime('%Y-%m-%d', gmtime())
             
             webURL = urlopen(html)
-            print (webURL.getcode())
             
             if webURL.getcode() == 200: # Check if search returns valid results
                 data = webURL.read().decode('utf-8')
                 printResults(data)
             else: # If no valid results, write error message to file
+                print (webURL.getcode())
                 f.write( 'Received an error from server,cannot retrieve results' + str(webURL.getcode()))
                 
         loadData()
@@ -282,7 +282,11 @@ class Parametric(object):
         
         # Get dataset from shapefile
         datashp = driver.Open(data)
-        datalyr = datashp.GetLayer()          
+        try:
+            datalyr = datashp.GetLayer()
+        except AttributeError:
+            print ('Historical data has not been loaded. Please re-run, select Yes on update.')
+            sys.exit()          
         datalyr.SetSpatialFilter(boxgeom)
         
         # Create point feature, add points from data layer
