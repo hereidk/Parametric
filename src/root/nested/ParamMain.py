@@ -10,6 +10,7 @@ import numpy as np
 import sys
 import os
 
+
 def selectHazard(title, choices):
     # Drop-down menu to select hazard
     root = tkinter.Tk()

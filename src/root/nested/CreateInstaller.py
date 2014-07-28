@@ -18,25 +18,24 @@ Modified from http://www.pythonschool.net/cxfreeze_win/
 '''
 
 import sys  
-from cx_Freeze import setup, Executable
-
- 
+from cx_Freeze import setup, Executable 
 
 application_title = "Parametric_Price" #what you want to application to be called
 main_python_file = "ParamMain.py" #the name of the python file you use to run the program
-
-
 
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
 
-includes = ["atexit","re"]
-includeFiles = "ParamBox.py"
+includes = ["atexit","re","osgeo.ogr"]
+packages = ["osgeo"]
+# includeFiles = 
+
+build_exe_options = {"packages": packages, "includes": includes}
 
 setup(
         name = application_title,
         version = "0.1",
         description = "Parametric pricing tool using historical earthquake, hurricane datasets",
-        options = {"build_exe" : {"includes" : includes , "include_files" : includeFiles }},
+        options = {"build_exe" : build_exe_options },
         executables = [Executable(main_python_file, base = base)])
