@@ -5,7 +5,7 @@ Created on Jun 9, 2014
 '''
 
 import tkinter
-from root.nested.ParamBox import Parametric
+from ParamBox import Parametric
 import numpy as np
 import sys
 import os
