@@ -40,7 +40,7 @@ def selectHazard(title, choices):
 def HUCatPayout():
     '''
     Get user-defined payout structure. Takes any units.
-    AAL calculated in same units, loss cost relative to maximum payout
+    AAL calculated in same units
     '''
     master = tkinter.Tk()
     
@@ -114,7 +114,7 @@ def HUCatPayout():
 def EQCatPayout():
     '''
     Get user-defined payout structure. Takes any units.
-    AAL calculated in same units, loss cost relative to maximum payout
+    AAL calculated in same units
     '''
     master = tkinter.Tk()
     
@@ -220,7 +220,7 @@ def reloadHistEQ(param, reloadEQ=True):
     elif reloadEQ == False:
         return os.getcwd() + '\GeoData\eqpts_layer.shp'
     
-def resultsBox(aal,losscost):
+def resultsBox(aal):
     '''
     Text box with results
     
@@ -232,8 +232,7 @@ def resultsBox(aal,losscost):
         sys.exit()
     
     tkinter.Label(master, text=('AAL=',aal)).grid(row=0)
-    tkinter.Label(master, text=('LossCost=',(losscost*100),'%')).grid(row=1)
-    tkinter.Button(master, text='OK', command = cancel).grid(row=2)
+    tkinter.Button(master, text='OK', command = cancel).grid(row=1)
     
     tkinter.mainloop()
 
@@ -405,14 +404,11 @@ if __name__ == '__main__':
     # Clip event set to user-defined year range
     intersect_max = intersect_max[intersect_max.Year >= startYear]
      
-    # Calculate AAL, loss cost
+    # Calculate AAL
     totalPayout = sum(intersect_max.Payout.values)
     maxpayout = np.max(globpayouts)
     aal = totalPayout/yearRange
-    losscost = aal/maxpayout
-    if np.isnan(losscost):
-        losscost=0
      
     # Text box with results
-    resultsBox(aal,losscost)
+    resultsBox(aal)
     
