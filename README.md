@@ -12,3 +12,5 @@ GUI gets user input on payout structure - average annual loss, loss costs return
 Payout structure based on earthquake magnitude ranges or hurricane wind speed category (Saffir-Simpson).
 
 Main file is ParamMain, class definition in ParamBox.
+
+Next step - Limit payouts to largest event in year.
