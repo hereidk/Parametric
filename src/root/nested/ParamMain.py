@@ -66,57 +66,6 @@ def CatPayout(peril):
     button.invoke()
     master.withdraw()
 
-def radioYearHU():
-    '''
-    Set preferred start of time series-older near major population centers, up to satellite era
-    '''
-    master = tkinter.Tk()    
-    v = tkinter.IntVar()
-    v.set(None)
-       
-    def setYear(v, value):
-        v.set(value)
-
-    def ok(v, otherentry):
-        try:
-            if v.get() == 0:
-                v.set(int(otherentry.get()))
-        except ValueError:
-            print('ERROR: Invalid year-please enter numeric value between 1848 and 2013.')
-            sys.exit()
-        master.quit()
-    
-    def cancel():
-        master.destroy()
-        sys.exit()
-    
-    total = tkinter.Radiobutton(master, text='1848: Total record', variable=v, value=1848, command=lambda: setYear(v, 1848))
-    total.grid(row=0)
-    total.deselect()
-    
-    historical = tkinter.Radiobutton(master, text='1950: Recent historical record', variable=v, value=1950, command=lambda: setYear(v, 1950))
-    historical.grid(row=1)
-    historical.deselect()
-    
-    satellite = tkinter.Radiobutton(master, text='1970: Satellite era', variable=v, value=1970, command=lambda: setYear(v, 1970))
-    satellite.grid(row=2)
-    satellite.deselect()
-    
-    otherradio = tkinter.Radiobutton(master, text='Other', variable=v, value=0, command=lambda: setYear(v, 0))
-    otherradio.grid(row=3)
-    otherradio.deselect()
-    
-    otherentry = tkinter.Entry(master, textvariable=v)
-    otherentry.grid(row=4)
-    
-    tkinter.Button(master, text='OK', command = lambda: ok(v,otherentry)).grid(row=5)
-    tkinter.Button(master, text='Cancel', command = cancel).grid(row=6)
-    
-    tkinter.mainloop()
-    master.withdraw()
-    
-    return v.get()
-
 def reloadHist(param, peril, hist_file, reload=True):
     '''
     If reload is true, recalculate shapefile, otherwise point to existing shapefile
@@ -135,7 +84,7 @@ def reloadHist(param, peril, hist_file, reload=True):
     
 
 
-def runHazard(hazard, box_file, reload=False):
+def runHazard(hazard, box_file, gui, reload=False):
     param = Parametric()
     
     # Convert box points to polygon shapefile
@@ -168,7 +117,9 @@ def runHazard(hazard, box_file, reload=False):
             intersect_max.loc[i,'Payout'] = globpayouts[intersect_max.Category[i],0]
          
         # Determine length of historical record
-        startYear = radioYearHU()
+        choices = ['1848: Total record', '1950: Recent historical record', '1970: Satellite era']
+        startYear = gui.selectFromList('Select start year for historical data', choices)
+        startYear = float(startYear[:4])
         currentYear = 2014.
          
         if startYear < 1848:
@@ -229,7 +180,7 @@ if __name__ == '__main__':
     elif update == 'No':
         reload = False
       
-    intersect_max, startYear, currentYear = runHazard(hazard, box_file, reload)
+    intersect_max, startYear, currentYear = runHazard(hazard, box_file, gui, reload)
             
     yearRange = currentYear - startYear + 1
      
