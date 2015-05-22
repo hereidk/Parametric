@@ -202,23 +202,29 @@ def EQCatPayout():
     button.invoke()
     master.withdraw()
 
-def reloadHistHU(param, hist_file, reloadHU=True):
+def reloadHist(param, peril, hist_file=None, reload=True):
     '''
     If reload is true, recalculate shapefile, otherwise point to existing shapefile
     '''
-    if reloadHU:
-        return param.loadIBTRACSData(hist_file)
-    elif reloadHU == False:
-        return os.getcwd() + '\GeoData\stormpts_layer.shp'
+    if reload:
+        if peril == 'Hurricane':
+            return param.loadIBTRACSData(hist_file)
+        elif peril == 'Earthquake':
+            return param.loadUSGSEQData()
+    elif reload == False:
+        if peril == 'Hurricane':
+            return os.getcwd() + '\GeoData\stormpts_layer.shp'
+        elif peril == 'Earthquake':
+            return os.getcwd() + '\GeoData\eqpts_layer.shp'
     
-def reloadHistEQ(param, reloadEQ=True):
-    '''
-    If reload is true, recalculate shapefile, otherwise point to existing shapefile
-    '''
-    if reloadEQ:
-        return param.loadUSGSEQData()
-    elif reloadEQ == False:
-        return os.getcwd() + '\GeoData\eqpts_layer.shp'
+# def reloadHistEQ(param, reload=True):
+#     '''
+#     If reload is true, recalculate shapefile, otherwise point to existing shapefile
+#     '''
+#     if reloadEQ:
+#         return param.loadUSGSEQData()
+#     elif reloadEQ == False:
+#         return os.getcwd() + '\GeoData\eqpts_layer.shp'
     
 def resultsBox(aal):
     '''
@@ -314,14 +320,14 @@ def runHU(reloadHU):
     # Set payout level based on storm category, user inputs
     intersect_max['Payout'] = ''
     for i in intersect_max.index:
-        intersect_max.Payout[i] = globpayouts[intersect_max.Category[i],0]
+        intersect_max.loc[i,'Payout'] = globpayouts[intersect_max.Category[i],0]
      
     # Determine length of historical record
     startYear = radioYearHU()
-    currentYear = 2013
+    currentYear = 2014.
      
     if startYear < 1848:
-        startYear = 1848
+        startYear = 1848.
     if startYear > currentYear:
         startYear = currentYear
          
@@ -368,15 +374,57 @@ def runEQ(reloadEQ):
             intersect.Payout[i] = globpayouts[-8][0]
     
     # Determine length of historical record
-    startYear = 1900
-    currentYear = 2014
+    startYear = 1900.
+    currentYear = 2015.
      
     if startYear < 1900:
-        startYear = 1900
+        startYear = 1900.
     if startYear > currentYear:
         startYear = currentYear
         
     return intersect, startYear, currentYear
+
+def runHazard(reload, hazard):
+    box_file = 'Box_template.csv'
+    param = Parametric()
+    
+    # Convert box points to polygon shapefile
+    box = param.genParamBox(box_file)
+    
+    if hazard == 'Hurricane':
+        hist_file = 'Allstorms.ibtracs_wmo.v03r05.csv'  
+        fields = {'Serial':'OFTString', 'Category':'OFTInteger', 'Year':'OFTInteger'} # Field names, data type 
+    else:
+        hist_file = None
+    
+    # Produce shapefile of storm tracks
+    hazardData = reloadHist(param, hist_file, reload) # reload=False: Use current shapefile
+    
+    # Get subset of points that fall within box    
+    intersect = param.intersect(box, hazardData, fields)
+    
+    # Select highest category that each storm reached within box
+    intersect_max = intersect.groupby('Serial', group_keys=False).apply(lambda x: x.ix[x.Category.idxmax()])
+    intersect_max.index = range(len(intersect_max))
+         
+    # Get user-defined payout structure. Any units or %
+    HUCatPayout()
+    
+    # Set payout level based on storm category, user inputs
+    intersect_max['Payout'] = ''
+    for i in intersect_max.index:
+        intersect_max.loc[i,'Payout'] = globpayouts[intersect_max.Category[i],0]
+     
+    # Determine length of historical record
+    startYear = radioYearHU()
+    currentYear = 2014.
+     
+    if startYear < 1848:
+        startYear = 1848.
+    if startYear > currentYear:
+        startYear = currentYear
+         
+    return intersect_max, startYear, currentYear
     
 
 if __name__ == '__main__':
