@@ -11,32 +11,38 @@ import sys
 import os
 from root2.nested.GUIClasses import GUI
 
-def HUCatPayout():
+def CatPayout(peril):
     '''
     Get user-defined payout structure. Takes any units.
     AAL calculated in same units
     '''
     master = tkinter.Tk()
     
-    # Storm category labels
-    labels = ['Storm Category', 'TS', 'Cat 1', 'Cat 2', 'Cat 3', 'Cat 4', 'Cat 5']
+    # Category labels
+    if peril == 'Hurricane':
+        labels = ['Storm Category', 'TS', 'Cat 1', 'Cat 2', 'Cat 3', 'Cat 4', 'Cat 5']
+    elif peril == 'Earthquake':
+        labels = ['EQ Magnitude >=', '6.0', '6.5', '7.0', '7.5', '8.0', '8.5', '9.0', '9.5']
+    num_bins = len(labels) - 1
+    
     for idx, label in enumerate(labels):
         tkinter.Label(master, text=label).grid(row=idx)
     
     # Storm category user inputs
     tkinter.Label(master, text='Payout').grid(row=0, column=1)
     
+    # Construct entry grid
     e = []
-    for idx in range(0,6):
+    for idx in range(0,num_bins):
         e.append(tkinter.Entry(master))
         e[idx].insert(0,0)
         e[idx].grid(row=idx+1,column=1)
-        if idx == 0:
+        if idx == 0: # Set focus on first entry
             e[idx].focus_set()
         
     # OK button, gets user payout structure
     def getPayouts(): 
-        payouts = np.zeros((6,1))
+        payouts = np.zeros((num_bins,1))
         try:
             for i in range(payouts.shape[0]):
                 payouts[i] = float(e[i].get())
@@ -53,99 +59,8 @@ def HUCatPayout():
         sys.exit()
         
     button = tkinter.Button(master, text='OK', command=getPayouts, padx=10)
-    button.grid(row=7, column=0)
-    tkinter.Button(master, text='Cancel', command = cancel).grid(row=7, column=1)
-    
-    tkinter.mainloop()
-    button.invoke()
-    master.withdraw()
-    
-def EQCatPayout():
-    '''
-    Get user-defined payout structure. Takes any units.
-    AAL calculated in same units
-    '''
-    master = tkinter.Tk()
-    
-    # Storm category labels
-    tkinter.Label(master, text='EQ Magnitude >=').grid(row=0)
-    tkinter.Label(master, text='6.0').grid(row=1)
-    tkinter.Label(master, text='6.5').grid(row=2)
-    tkinter.Label(master, text='7.0').grid(row=3)
-    tkinter.Label(master, text='7.5').grid(row=4)
-    tkinter.Label(master, text='8.0').grid(row=5)
-    tkinter.Label(master, text='8.5').grid(row=6)
-    tkinter.Label(master, text='9.0').grid(row=7)
-    tkinter.Label(master, text='9.5').grid(row=8)
-    
-    # Storm category user inputs
-    tkinter.Label(master, text='Payout').grid(row=0, column=1)
-    e0 = tkinter.Entry(master)
-    e1 = tkinter.Entry(master)
-    e2 = tkinter.Entry(master)
-    e3 = tkinter.Entry(master)
-    e4 = tkinter.Entry(master)
-    e5 = tkinter.Entry(master)
-    e6 = tkinter.Entry(master)
-    e7 = tkinter.Entry(master)
-    
-    # Default value = 0
-    e0.insert(0,0)
-    e1.insert(0,0)
-    e2.insert(0,0)
-    e3.insert(0,0)
-    e4.insert(0,0)
-    e5.insert(0,0)
-    e6.insert(0,0)
-    e7.insert(0,0)
-    
-    # Set window layout
-    e0.grid(row=1, column=1)
-    e1.grid(row=2, column=1)
-    e2.grid(row=3, column=1)
-    e3.grid(row=4, column=1)
-    e4.grid(row=5, column=1)
-    e5.grid(row=6, column=1)
-    e6.grid(row=7, column=1)
-    e7.grid(row=8, column=1)
-    
-    e0.focus_set()
-    
-    # OK button, gets user payout structure
-    def getPayouts(): 
-        payouts = np.zeros((8,1), dtype=float)
-        try:
-            payouts[0] = float(e0.get())
-            payouts[1] = float(e1.get())
-            payouts[2] = float(e2.get())
-            payouts[3] = float(e3.get())
-            payouts[4] = float(e4.get())
-            payouts[5] = float(e5.get())
-            payouts[6] = float(e6.get())
-            payouts[7] = float(e7.get())
-        except ValueError:
-#             master.destroy()
-#             
-#             tkinter.Label(master, text='Invalid payout-please enter numeric value.').grid(row=1)
-#             button = tkinter.Button(master, text='OK', command=cancel)
-#             button.grid(row=1)
-#             
-#             tkinter.mainloop()
-            print('ERROR: Invalid payout-please enter numeric value.')
-            sys.exit()
-        master.quit()
-        global globpayouts
-        globpayouts = payouts
-        return payouts
-    
-    # Exit button
-    def cancel():
-        master.destroy()
-        sys.exit()
-        
-    button = tkinter.Button(master, text='OK', command=getPayouts, padx=10)
-    button.grid(row=9, column=0)
-    tkinter.Button(master, text='Cancel', command = cancel).grid(row=9, column=1)
+    button.grid(row=num_bins+2, column=0)
+    tkinter.Button(master, text='Cancel', command = cancel).grid(row=num_bins+2, column=1)
     
     tkinter.mainloop()
     button.invoke()
@@ -239,14 +154,13 @@ def runHazard(hazard, box_file, reload=False):
     # Get subset of points that fall within box    
     intersect = param.intersect(box, hazardData, fields)
     
+    # Get user-defined payout structure. Any units or %
+    CatPayout(hazard)    
     
     if hazard == 'Hurricane':
         # Select highest category that each storm reached within box
         intersect_max = intersect.groupby('Serial', group_keys=False).apply(lambda x: x.ix[x.Category.idxmax()])
         intersect_max.index = range(len(intersect_max))
-         
-        # Get user-defined payout structure. Any units or %
-        HUCatPayout()
     
         # Set payout level based on storm category, user inputs
         intersect_max['Payout'] = ''
@@ -262,10 +176,8 @@ def runHazard(hazard, box_file, reload=False):
         if startYear > currentYear:
             startYear = currentYear
             
-    elif hazard == 'Earthquake':
-        EQCatPayout()
-    
-        # Set payout level based on storm category, user inputs
+    elif hazard == 'Earthquake':    
+        # Set payout level based on category, user inputs
         intersect['Payout'] = ''
         for i in intersect.index:
     #         intersect.Payout[i] = globeqpayouts[intersect.Mag[i],0]
@@ -301,7 +213,7 @@ def runHazard(hazard, box_file, reload=False):
 
 if __name__ == '__main__':
     
-    box_file = 'Box_template.csv'
+    box_file = 'EQBox_template.csv'
     gui = GUI()
     
     # Get user input to select hazard to analyze
