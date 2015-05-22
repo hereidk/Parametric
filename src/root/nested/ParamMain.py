@@ -202,9 +202,10 @@ def EQCatPayout():
     button.invoke()
     master.withdraw()
 
-def reloadHist(param, peril, hist_file=None, reload=True):
+def reloadHist(param, peril, hist_file, reload=True):
     '''
     If reload is true, recalculate shapefile, otherwise point to existing shapefile
+    hist_file is required for hurricane IBTRACS data, otherwise None
     '''
     if reload:
         if peril == 'Hurricane':
@@ -384,7 +385,7 @@ def runEQ(reloadEQ):
         
     return intersect, startYear, currentYear
 
-def runHazard(reload, hazard):
+def runHazard(hazard, reload=False):
     box_file = 'Box_template.csv'
     param = Parametric()
     
@@ -394,11 +395,12 @@ def runHazard(reload, hazard):
     if hazard == 'Hurricane':
         hist_file = 'Allstorms.ibtracs_wmo.v03r05.csv'  
         fields = {'Serial':'OFTString', 'Category':'OFTInteger', 'Year':'OFTInteger'} # Field names, data type 
-    else:
+    elif hazard == 'Earthquake':
         hist_file = None
+        fields = {'Mag':'OFTReal', 'Year':'OFTInteger'} # Field names, data type
     
     # Produce shapefile of storm tracks
-    hazardData = reloadHist(param, hist_file, reload) # reload=False: Use current shapefile
+    hazardData = reloadHist(param, hazard, hist_file, reload) # reload=False: Use current shapefile
     
     # Get subset of points that fall within box    
     intersect = param.intersect(box, hazardData, fields)
@@ -441,12 +443,9 @@ if __name__ == '__main__':
         reload = True
     elif update == 'No':
         reload = False
-    
-    if hazard == 'Hurricane':   
-        intersect_max, startYear, currentYear = runHU(reload)
-    elif hazard == 'Earthquake': 
-        intersect_max, startYear, currentYear = runEQ(reload)
-        
+      
+    intersect_max, startYear, currentYear = runHazard(hazard, reload)
+            
     yearRange = currentYear - startYear + 1
      
     # Clip event set to user-defined year range
