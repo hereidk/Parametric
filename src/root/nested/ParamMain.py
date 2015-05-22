@@ -25,13 +25,12 @@ def CatPayout(peril):
         labels = ['EQ Magnitude >=', '6.0', '6.5', '7.0', '7.5', '8.0', '8.5', '9.0', '9.5']
     num_bins = len(labels) - 1
     
-    for idx, label in enumerate(labels):
-        tkinter.Label(master, text=label).grid(row=idx)
-    
     # Storm category user inputs
+    for idx, label in enumerate(labels):
+        tkinter.Label(master, text=label).grid(row=idx)    
+        
+    # Construct entry payout grid
     tkinter.Label(master, text='Payout').grid(row=0, column=1)
-    
-    # Construct entry grid
     e = []
     for idx in range(0,num_bins):
         e.append(tkinter.Entry(master))
@@ -80,8 +79,7 @@ def reloadHist(param, peril, hist_file, reload=True):
         if peril == 'Hurricane':
             return os.getcwd() + '\GeoData\stormpts_layer.shp'
         elif peril == 'Earthquake':
-            return os.getcwd() + '\GeoData\eqpts_layer.shp'
-    
+            return os.getcwd() + '\GeoData\eqpts_layer.shp'   
 
 
 def runHazard(hazard, box_file, gui, reload=False):
@@ -121,11 +119,6 @@ def runHazard(hazard, box_file, gui, reload=False):
         startYear = gui.selectFromList('Select start year for historical data', choices)
         startYear = float(startYear[:4])
         currentYear = 2014.
-         
-        if startYear < 1848:
-            startYear = 1848.
-        if startYear > currentYear:
-            startYear = currentYear
             
     elif hazard == 'Earthquake':    
         # Set payout level based on category, user inputs
