@@ -19,58 +19,33 @@ def HUCatPayout():
     master = tkinter.Tk()
     
     # Storm category labels
-    tkinter.Label(master, text='Storm Category').grid(row=0)
-    tkinter.Label(master, text='TS').grid(row=1)
-    tkinter.Label(master, text='Cat 1').grid(row=2)
-    tkinter.Label(master, text='Cat 2').grid(row=3)
-    tkinter.Label(master, text='Cat 3').grid(row=4)
-    tkinter.Label(master, text='Cat 4').grid(row=5)
-    tkinter.Label(master, text='Cat 5').grid(row=6)
+    labels = ['Storm Category', 'TS', 'Cat 1', 'Cat 2', 'Cat 3', 'Cat 4', 'Cat 5']
+    for idx, label in enumerate(labels):
+        tkinter.Label(master, text=label).grid(row=idx)
     
     # Storm category user inputs
     tkinter.Label(master, text='Payout').grid(row=0, column=1)
-    e0 = tkinter.Entry(master)
-    e1 = tkinter.Entry(master)
-    e2 = tkinter.Entry(master)
-    e3 = tkinter.Entry(master)
-    e4 = tkinter.Entry(master)
-    e5 = tkinter.Entry(master)
     
-    # Default value = 0
-    e0.insert(0,0)
-    e1.insert(0,0)
-    e2.insert(0,0)
-    e3.insert(0,0)
-    e4.insert(0,0)
-    e5.insert(0,0)
-    
-    # Set window layout
-    e0.grid(row=1, column=1)
-    e1.grid(row=2, column=1)
-    e2.grid(row=3, column=1)
-    e3.grid(row=4, column=1)
-    e4.grid(row=5, column=1)
-    e5.grid(row=6, column=1)
-    
-    e0.focus_set()
-    
+    e = []
+    for idx in range(0,6):
+        e.append(tkinter.Entry(master))
+        e[idx].insert(0,0)
+        e[idx].grid(row=idx+1,column=1)
+        if idx == 0:
+            e[idx].focus_set()
+        
     # OK button, gets user payout structure
     def getPayouts(): 
-        payouts = np.zeros((6,1), dtype=float)
+        payouts = np.zeros((6,1))
         try:
-            payouts[0] = float(e0.get())
-            payouts[1] = float(e1.get())
-            payouts[2] = float(e2.get())
-            payouts[3] = float(e3.get())
-            payouts[4] = float(e4.get())
-            payouts[5] = float(e5.get())
+            for i in range(payouts.shape[0]):
+                payouts[i] = float(e[i].get())
         except ValueError:
             print('ERROR: Invalid payout-please enter numeric value.')
             sys.exit()
         master.quit()
         global globpayouts
         globpayouts = payouts
-        return payouts
     
     # Exit button
     def cancel():
@@ -176,22 +151,6 @@ def EQCatPayout():
     button.invoke()
     master.withdraw()
 
-def reloadHist(param, peril, hist_file, reload=True):
-    '''
-    If reload is true, recalculate shapefile, otherwise point to existing shapefile
-    hist_file is required for hurricane IBTRACS data, otherwise None
-    '''
-    if reload:
-        if peril == 'Hurricane':
-            return param.loadIBTRACSData(hist_file)
-        elif peril == 'Earthquake':
-            return param.loadUSGSEQData()
-    elif reload == False:
-        if peril == 'Hurricane':
-            return os.getcwd() + '\GeoData\stormpts_layer.shp'
-        elif peril == 'Earthquake':
-            return os.getcwd() + '\GeoData\eqpts_layer.shp'
-    
 def radioYearHU():
     '''
     Set preferred start of time series-older near major population centers, up to satellite era
@@ -242,6 +201,24 @@ def radioYearHU():
     master.withdraw()
     
     return v.get()
+
+def reloadHist(param, peril, hist_file, reload=True):
+    '''
+    If reload is true, recalculate shapefile, otherwise point to existing shapefile
+    hist_file is required for hurricane IBTRACS data, otherwise None
+    '''
+    if reload:
+        if peril == 'Hurricane':
+            return param.loadIBTRACSData(hist_file)
+        elif peril == 'Earthquake':
+            return param.loadUSGSEQData()
+    elif reload == False:
+        if peril == 'Hurricane':
+            return os.getcwd() + '\GeoData\stormpts_layer.shp'
+        elif peril == 'Earthquake':
+            return os.getcwd() + '\GeoData\eqpts_layer.shp'
+    
+
 
 def runHazard(hazard, box_file, reload=False):
     param = Parametric()
@@ -324,7 +301,7 @@ def runHazard(hazard, box_file, reload=False):
 
 if __name__ == '__main__':
     
-    box_file = 'EQBox_template.csv'
+    box_file = 'Box_template.csv'
     gui = GUI()
     
     # Get user input to select hazard to analyze
