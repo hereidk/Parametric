@@ -9,33 +9,7 @@ from ParamBox import Parametric
 import numpy as np
 import sys
 import os
-
-
-def selectHazard(title, choices):
-    # Drop-down menu to select hazard
-    root = tkinter.Tk()
-    root.geometry("%dx%d+%d+%d" % (330, 80, 200, 150))
-    root.title(title)
-        
-    var = tkinter.StringVar(root)
-    var.set(choices[0]) # Initial value
-    option = tkinter.OptionMenu(root, var, *choices)
-    option.pack(side='left', padx=10, pady=10)
-    scrollbar = tkinter.Scrollbar(root)
-    scrollbar.pack(side='right', fill='y')
-    
-    def get_hazard():
-        select_hazard = var.get()
-        root.quit()
-        return select_hazard
-    
-    button = tkinter.Button(root, text='OK', command=get_hazard)
-    button.pack(side='left', padx=20, pady=10)
-        
-    root.mainloop()
-    hazard = button.invoke()
-    root.withdraw()
-    return hazard
+from root2.nested.GUIClasses import GUI
 
 def HUCatPayout():
     '''
@@ -218,31 +192,6 @@ def reloadHist(param, peril, hist_file, reload=True):
         elif peril == 'Earthquake':
             return os.getcwd() + '\GeoData\eqpts_layer.shp'
     
-# def reloadHistEQ(param, reload=True):
-#     '''
-#     If reload is true, recalculate shapefile, otherwise point to existing shapefile
-#     '''
-#     if reloadEQ:
-#         return param.loadUSGSEQData()
-#     elif reloadEQ == False:
-#         return os.getcwd() + '\GeoData\eqpts_layer.shp'
-    
-def resultsBox(aal):
-    '''
-    Text box with results
-    
-    '''
-    master = tkinter.Tk()
-    
-    def cancel():
-        master.destroy()
-        sys.exit()
-    
-    tkinter.Label(master, text=('AAL=',aal)).grid(row=0)
-    tkinter.Button(master, text='OK', command = cancel).grid(row=1)
-    
-    tkinter.mainloop()
-
 def radioYearHU():
     '''
     Set preferred start of time series-older near major population centers, up to satellite era
@@ -294,99 +243,7 @@ def radioYearHU():
     
     return v.get()
 
-def runHU(reloadHU):
-    box_file = 'Box_template.csv'
-    huhist_file = 'Allstorms.ibtracs_wmo.v03r05.csv'
-    
-    param = Parametric()
-    
-    # Convert box points to polygon shapefile
-    box = param.genParamBox(box_file)
-    
-    # Produce shapefile of storm tracks
-    ibtracsData = reloadHistHU(param, huhist_file, reloadHU) # reload=False: Use current shapefile
-    
-    # Get subset of points that fall within box
-#     intersect = param.intersect(box,ibtracsData)
-    fields = {'Serial':'OFTString', 'Category':'OFTInteger', 'Year':'OFTInteger'} # Field names, data type
-    intersect = param.intersect(box, ibtracsData, fields)
-    
-    # Select highest category that each storm reached within box
-    intersect_max = intersect.groupby('Serial', group_keys=False).apply(lambda x: x.ix[x.Category.idxmax()])
-    intersect_max.index = range(len(intersect_max))
-         
-    # Get user-defined payout structure. Any units or %
-    HUCatPayout()
-    
-    # Set payout level based on storm category, user inputs
-    intersect_max['Payout'] = ''
-    for i in intersect_max.index:
-        intersect_max.loc[i,'Payout'] = globpayouts[intersect_max.Category[i],0]
-     
-    # Determine length of historical record
-    startYear = radioYearHU()
-    currentYear = 2014.
-     
-    if startYear < 1848:
-        startYear = 1848.
-    if startYear > currentYear:
-        startYear = currentYear
-         
-    return intersect_max, startYear, currentYear
-     
-def runEQ(reloadEQ):
-    '''
-    Based on magnitude only - add depth parameter??
-    '''
-    box_file = 'EQBox_template.csv'    
-#     eqhist_file = r'C:\Python code\Parametric\src\root\nested\USGSoutput.csv'
-    
-    param = Parametric()
-    
-    # Convert box points to polygon shapefile
-    box = param.genParamBox(box_file)
-    
-    USGSEQData = reloadHistEQ(param, reloadEQ)
-    
-    fields = {'Mag':'OFTReal', 'Year':'OFTInteger'} # Field names, data type
-    intersect = param.intersect(box,USGSEQData,fields)
-    
-    EQCatPayout()
-    
-    # Set payout level based on storm category, user inputs
-    intersect['Payout'] = ''
-    for i in intersect.index:
-#         intersect.Payout[i] = globeqpayouts[intersect.Mag[i],0]
-        if intersect.Mag[i] >= 9.5:
-            intersect.Payout[i] = globpayouts[-1][0]
-        elif intersect.Mag[i] >= 9.0:
-            intersect.Payout[i] = globpayouts[-2][0]
-        elif intersect.Mag[i] >= 8.5:
-            intersect.Payout[i] = globpayouts[-3][0]
-        elif intersect.Mag[i] >= 8.0:
-            intersect.Payout[i] = globpayouts[-4][0]
-        elif intersect.Mag[i] >= 7.5:
-            intersect.Payout[i] = globpayouts[-5][0]
-        elif intersect.Mag[i] >= 7.0:
-            intersect.Payout[i] = globpayouts[-6][0]
-        elif intersect.Mag[i] >= 6.5:
-            intersect.Payout[i] = globpayouts[-7][0]
-        elif intersect.Mag[i] >= 6.0:
-            intersect.Payout[i] = globpayouts[-8][0]
-    
-    # Determine length of historical record
-    startYear = 1900.
-    currentYear = 2015.
-     
-    if startYear < 1900:
-        startYear = 1900.
-    if startYear > currentYear:
-        startYear = currentYear
-        
-    return intersect, startYear, currentYear
-
-def runHazard(hazard, reload=False):
-    box_file = 'Box_template.csv'
+def runHazard(hazard, box_file, reload=False):
     param = Parametric()
     
     # Convert box points to polygon shapefile
@@ -405,46 +262,85 @@ def runHazard(hazard, reload=False):
     # Get subset of points that fall within box    
     intersect = param.intersect(box, hazardData, fields)
     
-    # Select highest category that each storm reached within box
-    intersect_max = intersect.groupby('Serial', group_keys=False).apply(lambda x: x.ix[x.Category.idxmax()])
-    intersect_max.index = range(len(intersect_max))
-         
-    # Get user-defined payout structure. Any units or %
-    HUCatPayout()
     
-    # Set payout level based on storm category, user inputs
-    intersect_max['Payout'] = ''
-    for i in intersect_max.index:
-        intersect_max.loc[i,'Payout'] = globpayouts[intersect_max.Category[i],0]
-     
-    # Determine length of historical record
-    startYear = radioYearHU()
-    currentYear = 2014.
-     
-    if startYear < 1848:
-        startYear = 1848.
-    if startYear > currentYear:
-        startYear = currentYear
+    if hazard == 'Hurricane':
+        # Select highest category that each storm reached within box
+        intersect_max = intersect.groupby('Serial', group_keys=False).apply(lambda x: x.ix[x.Category.idxmax()])
+        intersect_max.index = range(len(intersect_max))
+         
+        # Get user-defined payout structure. Any units or %
+        HUCatPayout()
+    
+        # Set payout level based on storm category, user inputs
+        intersect_max['Payout'] = ''
+        for i in intersect_max.index:
+            intersect_max.loc[i,'Payout'] = globpayouts[intersect_max.Category[i],0]
+         
+        # Determine length of historical record
+        startYear = radioYearHU()
+        currentYear = 2014.
+         
+        if startYear < 1848:
+            startYear = 1848.
+        if startYear > currentYear:
+            startYear = currentYear
+            
+    elif hazard == 'Earthquake':
+        EQCatPayout()
+    
+        # Set payout level based on storm category, user inputs
+        intersect['Payout'] = ''
+        for i in intersect.index:
+    #         intersect.Payout[i] = globeqpayouts[intersect.Mag[i],0]
+            if intersect.Mag[i] >= 9.5:
+                intersect.Payout[i] = globpayouts[-1][0]
+            elif intersect.Mag[i] >= 9.0:
+                intersect.Payout[i] = globpayouts[-2][0]
+            elif intersect.Mag[i] >= 8.5:
+                intersect.Payout[i] = globpayouts[-3][0]
+            elif intersect.Mag[i] >= 8.0:
+                intersect.Payout[i] = globpayouts[-4][0]
+            elif intersect.Mag[i] >= 7.5:
+                intersect.Payout[i] = globpayouts[-5][0]
+            elif intersect.Mag[i] >= 7.0:
+                intersect.Payout[i] = globpayouts[-6][0]
+            elif intersect.Mag[i] >= 6.5:
+                intersect.Payout[i] = globpayouts[-7][0]
+            elif intersect.Mag[i] >= 6.0:
+                intersect.Payout[i] = globpayouts[-8][0]
+        intersect_max = intersect
+        
+        # Determine length of historical record
+        startYear = 1900.
+        currentYear = 2015.
+         
+        if startYear < 1900:
+            startYear = 1900.
+        if startYear > currentYear:
+            startYear = currentYear
          
     return intersect_max, startYear, currentYear
     
 
 if __name__ == '__main__':
     
+    box_file = 'EQBox_template.csv'
+    gui = GUI()
+    
     # Get user input to select hazard to analyze
     choices = ['Hurricane','Earthquake']
-    hazard = selectHazard('Select hazard type', choices)
+    hazard = gui.selectFromList('Select hazard type', choices)
     
     # Get user input on reloading database
     choices = ['Yes','No']
-    update = selectHazard('Update historical database?', choices)
+    update = gui.selectFromList('Update historical database?', choices)
     
     if update == 'Yes':
         reload = True
     elif update == 'No':
         reload = False
       
-    intersect_max, startYear, currentYear = runHazard(hazard, reload)
+    intersect_max, startYear, currentYear = runHazard(hazard, box_file, reload)
             
     yearRange = currentYear - startYear + 1
      
@@ -457,5 +353,5 @@ if __name__ == '__main__':
     aal = totalPayout/yearRange
      
     # Text box with results
-    resultsBox(aal)
+    gui.textBox('AAL=%s' % aal)
     
