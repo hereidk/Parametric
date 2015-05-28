@@ -10,6 +10,7 @@ import numpy as np
 import sys
 import os
 from root2.nested.GUIClasses import GUI
+import bisect
 
 def CatPayout(peril):
     '''
@@ -88,6 +89,7 @@ def runHazard(hazard, box_file, gui, reload=False):
     # Convert box points to polygon shapefile
     box = param.genParamBox(box_file)
     
+    # Select historical file (hurricane only), set fields and field characteristics
     if hazard == 'Hurricane':
         hist_file = 'Allstorms.ibtracs_wmo.v03r05.csv'  
         fields = {'Serial':'OFTString', 'Category':'OFTInteger', 'Year':'OFTInteger'} # Field names, data type 
@@ -124,23 +126,8 @@ def runHazard(hazard, box_file, gui, reload=False):
         # Set payout level based on category, user inputs
         intersect['Payout'] = ''
         for i in intersect.index:
-    #         intersect.Payout[i] = globeqpayouts[intersect.Mag[i],0]
-            if intersect.Mag[i] >= 9.5:
-                intersect.Payout[i] = globpayouts[-1][0]
-            elif intersect.Mag[i] >= 9.0:
-                intersect.Payout[i] = globpayouts[-2][0]
-            elif intersect.Mag[i] >= 8.5:
-                intersect.Payout[i] = globpayouts[-3][0]
-            elif intersect.Mag[i] >= 8.0:
-                intersect.Payout[i] = globpayouts[-4][0]
-            elif intersect.Mag[i] >= 7.5:
-                intersect.Payout[i] = globpayouts[-5][0]
-            elif intersect.Mag[i] >= 7.0:
-                intersect.Payout[i] = globpayouts[-6][0]
-            elif intersect.Mag[i] >= 6.5:
-                intersect.Payout[i] = globpayouts[-7][0]
-            elif intersect.Mag[i] >= 6.0:
-                intersect.Payout[i] = globpayouts[-8][0]
+            # Locate each event magnitude in ordered list corresponding to magnitude payouts
+            intersect.Payout[i] = globpayouts[bisect.bisect([6., 6.5, 7., 7.5, 8., 8.5, 9., 9.5],intersect.Mag[i])-1]
         intersect_max = intersect
         
         # Determine length of historical record
