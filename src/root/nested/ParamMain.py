@@ -21,7 +21,7 @@ def CatPayout(peril):
     
     # Category labels
     if peril == 'Hurricane':
-        labels = ['Storm Category', 'TS', 'Cat 1', 'Cat 2', 'Cat 3', 'Cat 4', 'Cat 5']
+        labels = ['Storm Category', '0', '1', '2', '3', '4', '5']
     elif peril == 'Earthquake':
         labels = ['EQ Magnitude >=', '6.0', '6.5', '7.0', '7.5', '8.0', '8.5', '9.0', '9.5']
     num_bins = len(labels) - 1
@@ -42,10 +42,11 @@ def CatPayout(peril):
         
     # OK button, gets user payout structure
     def getPayouts(): 
-        payouts = np.zeros((num_bins,1))
+        payouts = np.zeros((num_bins,2))
+        payouts[:,1] = np.array(labels[1:],dtype=float)
         try:
             for i in range(payouts.shape[0]):
-                payouts[i] = float(e[i].get())
+                payouts[i,0] = float(e[i].get())
         except ValueError:
             print('ERROR: Invalid payout-please enter numeric value.')
             sys.exit()
@@ -127,7 +128,8 @@ def runHazard(hazard, box_file, gui, reload=False):
         intersect['Payout'] = ''
         for i in intersect.index:
             # Locate each event magnitude in ordered list corresponding to magnitude payouts
-            intersect.Payout[i] = globpayouts[bisect.bisect([6., 6.5, 7., 7.5, 8., 8.5, 9., 9.5],intersect.Mag[i])-1]
+            # Event magnitude list comes from labels in user-supplied payout input
+            intersect.Payout[i] = globpayouts[bisect.bisect(globpayouts[:,1],intersect.Mag[i])-1,0]
         intersect_max = intersect
         
         # Determine length of historical record
