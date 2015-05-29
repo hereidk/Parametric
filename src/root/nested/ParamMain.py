@@ -110,6 +110,7 @@ def runHazard(hazard, box_file, gui, reload=False):
     if hazard == 'Hurricane':
         # Select highest category that each storm reached within box
         intersect_max = intersect.groupby('Serial', group_keys=False).apply(lambda x: x.ix[x.Category.idxmax()])
+        intersect_max = intersect_max.groupby('Year', group_keys=False).apply(lambda x: x.ix[x.Category.idxmax()])
         intersect_max.index = range(len(intersect_max))
     
         # Set payout level based on storm category, user inputs
@@ -131,6 +132,7 @@ def runHazard(hazard, box_file, gui, reload=False):
             # Event magnitude list comes from labels in user-supplied payout input
             intersect.Payout[i] = globpayouts[bisect.bisect(globpayouts[:,1],intersect.Mag[i])-1,0]
         intersect_max = intersect
+        intersect_max = intersect.groupby('Year', group_keys=False).apply(lambda x: x.ix[x.Mag.idxmax()])
         
         # Determine length of historical record
         startYear = 1900.
@@ -146,7 +148,7 @@ def runHazard(hazard, box_file, gui, reload=False):
 
 if __name__ == '__main__':
     
-    box_file = 'EQBox_template.csv'
+    box_file = 'Box_template.csv'
     gui = GUI()
     
     # Get user input to select hazard to analyze
