@@ -91,7 +91,7 @@ def runHazard(hazard, box_file, gui, reload=False):
     
     # Select historical file (hurricane only), set fields and field characteristics
     if hazard == 'Hurricane':
-        hist_file = 'Allstorms.ibtracs_wmo.v03r05.csv'  
+        hist_file = 'Allstorms.ibtracs_wmo.v03r06.csv'  
         fields = {'Serial':'OFTString', 'Category':'OFTInteger', 'Year':'OFTInteger'} # Field names, data type 
     elif hazard == 'Earthquake':
         hist_file = None
