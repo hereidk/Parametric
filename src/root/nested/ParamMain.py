@@ -135,13 +135,8 @@ def runHazard(hazard, box_file, gui, reload=False):
         intersect_max = intersect.groupby('Year', group_keys=False).apply(lambda x: x.ix[x.Mag.idxmax()])
         
         # Determine length of historical record
-        startYear = 1900.
+        startYear = 1900.   # Historical record max: 1900
         currentYear = 2015.
-         
-        if startYear < 1900:
-            startYear = 1900.
-        if startYear > currentYear:
-            startYear = currentYear
          
     return intersect_max, startYear, currentYear
     
